@@ -8,12 +8,12 @@ packages.
 
 - **OSM sources**: Use OpenStreetMap for building footprints, roads, parking lots, and helipad
   positions. X-Plane autogen already leverages OSM for roads and water features, but not individual
-  buildings.
+  buildings (`x-plane.com`, `developer.x-plane.com`).
 - **Overpass API**: Query OSM via Overpass and export results as GeoJSON. Overpass Turbo is a
-  reference flow for exporting building outlines.
+  reference flow for exporting building outlines (`medium.com`).
 - **Coordinate normalization**: GeoJSON coordinates are global (lat/lon). Convert to a local
   Cartesian coordinate system before creating 3D geometry to avoid floating-point jitter.
-  Recommended libraries: `geolib` (JavaScript) or `pyproj` (Python).
+  Recommended libraries: `geolib` (JavaScript) or `pyproj` (Python) (`medium.com`).
 - **Elevation data**: Incorporate DEM tiles (e.g., NASA SRTM) to place objects at correct heights
   and support sloped terrain. Candidate tools: `rasterio` or elevation helpers.
 
