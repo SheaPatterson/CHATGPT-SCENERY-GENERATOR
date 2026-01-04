@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from zipfile import ZipFile
 
+from hems_generator.scene import Scene
 from hems_generator.utils import write_text
 
 
@@ -20,6 +21,12 @@ class SceneryPackage:
         return f"HOSP_{self.faa_id}_{self.name}"
 
     @property
+    def package_dir(self) -> Path:
+        return self.root_dir / self.package_name
+
+    @property
+    def scenery_path(self) -> Path:
+        return self.package_dir / "Custom Scenery" / self.package_name
     def scenery_path(self) -> Path:
         return self.root_dir / self.package_name / "Custom Scenery" / self.package_name
 
@@ -45,6 +52,24 @@ class SceneryPackage:
             scenery_root / "textures" / "README.txt",
             "Procedural textures will be written here during pipeline execution.\n",
         )
+        write_text(
+            scenery_root / "polygons" / "README.txt",
+            "Draped polygons (.pol) will be written here during pipeline execution.\n",
+        )
+        write_text(
+            scenery_root / "lines" / "README.txt",
+            "Line definitions (.lin) will be written here during pipeline execution.\n",
+        )
+
+    def write_scene(self, scene: Scene) -> None:
+        write_text(
+            self.scenery_path / "scene.json",
+            scene.to_json(),
+        )
+
+    def zip_to(self, target_zip: Path) -> None:
+        target_zip.parent.mkdir(parents=True, exist_ok=True)
+        base_dir = self.package_dir
 
     def zip_to(self, target_zip: Path) -> None:
         target_zip.parent.mkdir(parents=True, exist_ok=True)
