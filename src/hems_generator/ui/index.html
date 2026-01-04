@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HEMS Scenery Generator</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="app__header">
+        <div>
+          <p class="app__eyebrow">HEMS Hospital Scenery Generator</p>
+          <h1>Generate X-Plane packages in minutes</h1>
+          <p class="app__subhead">
+            Paste FAA IDs or upload CSV data, then download the generated scenery zip files.
+          </p>
+        </div>
+        <div class="app__badge">Offline-friendly UI</div>
+      </header>
+
+      <section class="card">
+        <h2>Input</h2>
+        <div class="grid">
+          <label class="field">
+            <span>FAA IDs (comma or newline separated)</span>
+            <textarea id="faaIds" rows="4" placeholder="1TN4, 7NC1"></textarea>
+          </label>
+          <label class="field">
+            <span>CSV data (faa_id,name,lat,lon)</span>
+            <textarea id="csvData" rows="4" placeholder="faa_id,name,lat,lon&#10;1TN4,Regional Medical Center,36.1234,-86.6789"></textarea>
+          </label>
+        </div>
+        <div class="grid grid--inline">
+          <label class="field">
+            <span>Output folder</span>
+            <input id="outputDir" type="text" value="output" />
+          </label>
+          <label class="field">
+            <span>Jobs folder</span>
+            <input id="jobsDir" type="text" value="output/jobs" />
+          </label>
+          <label class="field">
+            <span>AOI radius (m)</span>
+            <input id="aoiRadius" type="number" min="50" max="2000" value="600" />
+          </label>
+        </div>
+        <button id="generateBtn" class="button">Generate scenery</button>
+        <p id="status" class="status" role="status"></p>
+      </section>
+
+      <section class="card">
+        <h2>Results</h2>
+        <div id="results" class="results">
+          <p class="muted">No packages generated yet.</p>
+        </div>
+      </section>
+    </main>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>
