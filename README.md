@@ -16,6 +16,17 @@ A local, offline-friendly pipeline that turns FAA IDs into X-Plane 11 hospital s
 python -m hems_generator.cli --ids 1TN4,7NC1 --output output
 ```
 
+### UI preview
+
+Start the local UI server and open the printed URL in your browser:
+
+```bash
+python -m hems_generator.ui_server
+```
+
+The UI binds to `0.0.0.0:8000` by default so it can render in containerized environments.
+Use `--host` and `--port` to change the binding.
+
 ### CSV input
 
 ```csv

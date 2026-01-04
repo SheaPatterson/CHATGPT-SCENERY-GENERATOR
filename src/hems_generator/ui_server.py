@@ -216,7 +216,11 @@ def run_server(host: str, port: int) -> None:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Run the HEMS UI server.")
-    parser.add_argument("--host", default="127.0.0.1", help="Host interface to bind.")
+    parser.add_argument(
+        "--host",
+        default="0.0.0.0",
+        help="Host interface to bind (0.0.0.0 for external access).",
+    )
     parser.add_argument("--port", type=int, default=8000, help="Port to listen on.")
     return parser
 

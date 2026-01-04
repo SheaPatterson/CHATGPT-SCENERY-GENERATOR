@@ -68,6 +68,17 @@ body {
   box-shadow: 0 10px 30px rgba(27, 36, 48, 0.08);
 }
 
+.card--note {
+  border-style: dashed;
+  background: #f8faff;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.card--note p {
+  margin: 6px 0 0;
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
