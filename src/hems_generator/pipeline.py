@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
+from hashlib import sha1
 from math import cos, radians
 from pathlib import Path
 from typing import Iterable, List
 
 from hems_generator.config import GeneratorConfig
 from hems_generator.detection import resolve_height, resolve_helipad_position
-from hems_generator.dsf_writer import write_overlay_stub
+from hems_generator.dsf_writer import tile_for_location, write_overlay_stub
 from hems_generator.exporter import SceneryPackage
 from hems_generator.job import HospitalJob, create_default_job
 from hems_generator.obj_writer import write_simple_hospital_obj, write_simple_marker_obj
@@ -93,6 +95,9 @@ def build_scenery_batch(
     jobs_dir: Path,
 ) -> List[PipelineResult]:
     config.ensure_output_dir()
+    config.ensure_cache_dir()
+    _ensure_cache_layers(config.cache_dir)
+    write_text(config.output_dir / "generator_version.txt", f"{config.generator_version}\n")
     sites = resolve_sites(faa_ids, name_map)
     results: List[PipelineResult] = []
     output_paths = []
@@ -112,26 +117,39 @@ def build_scenery_batch(
 
         package = SceneryPackage(site.faa_id, site.name, config.output_dir)
         package.build_skeleton()
-        write_text(
-            package.scenery_path / "polygons" / "helipad_markings.pol",
-            "\n".join(
-                [
-                    "A",
-                    "850",
-                    "DRAPED_POLYGON",
-                    "",
-                    "TEXTURE helipad_markings.png",
-                    "SCALE 1.0 1.0",
-                    "",
-                ]
-            ),
-        )
-        scene = _build_scene(job)
-        package.write_scene(scene)
-        write_simple_hospital_obj(package.scenery_path / "objects" / "hospital_0.obj")
-        write_simple_marker_obj(package.scenery_path / "objects" / "helipad_marker.obj")
-        write_overlay_stub(package.scenery_path, scene, job.location.lat, job.location.lon)
-        zip_path = config.output_dir / f"HOSP_{site.faa_id}_{site.name}.zip"
+        _write_helipad_polygon(package.scenery_path)
+        _write_objects(package.scenery_path)
+
+        build_hash = _build_cache_key(job, config.generator_version)
+        build_dir = config.cache_dir / "build" / f"build_{build_hash}"
+        stage_paths = _stage_paths(build_dir)
+        cache_hit = all(path.exists() for path in stage_paths.values())
+
+        if cache_hit:
+            _hydrate_from_cache(
+                package.scenery_path,
+                stage_paths,
+                job.location.lat,
+                job.location.lon,
+            )
+        else:
+            scene = _build_scene(job)
+            package.write_scene(scene)
+            dsf_path = write_overlay_stub(
+                package.scenery_path,
+                scene,
+                job.location.lat,
+                job.location.lon,
+            )
+            _persist_cache(
+                build_dir,
+                scene,
+                dsf_path,
+                job,
+            )
+
+        package_name = f"HOSP_{site.faa_id}_{site.name}"
+        zip_path = config.output_dir / f"{package_name}.zip"
         output_paths.append(zip_path)
         package.zip_to(zip_path)
         results.append(
@@ -145,3 +163,68 @@ def build_scenery_batch(
 
     ensure_unique_paths(output_paths)
     return results
+
+
+def _ensure_cache_layers(cache_dir: Path) -> None:
+    for layer in ("geo", "elev", "imagery", "build"):
+        (cache_dir / layer).mkdir(parents=True, exist_ok=True)
+
+
+def _build_cache_key(job: HospitalJob, generator_version: str) -> str:
+    payload = json.dumps(job.to_dict(), sort_keys=True)
+    digest = sha1()
+    digest.update(payload.encode("utf-8"))
+    digest.update(generator_version.encode("utf-8"))
+    return digest.hexdigest()
+
+
+def _stage_paths(build_dir: Path) -> dict[str, Path]:
+    return {
+        "scene": build_dir / "scene.json",
+        "buildings": build_dir / "buildings.json",
+        "parking": build_dir / "parking.json",
+        "lights": build_dir / "lights.json",
+        "dsf": build_dir / "dsf_stub.txt",
+    }
+
+
+def _persist_cache(build_dir: Path, scene: Scene, dsf_path: Path, job: HospitalJob) -> None:
+    build_dir.mkdir(parents=True, exist_ok=True)
+    stage_paths = _stage_paths(build_dir)
+    write_text(stage_paths["scene"], scene.to_json())
+    write_text(stage_paths["dsf"], dsf_path.read_text(encoding="utf-8"))
+    write_text(stage_paths["buildings"], json.dumps({"floors": job.hospital.floors}))
+    write_text(stage_paths["parking"], json.dumps({"enabled": job.ground.generate_parking}))
+    write_text(stage_paths["lights"], json.dumps({"night_strength": job.lighting.night_strength}))
+
+
+def _hydrate_from_cache(
+    scenery_path: Path,
+    stage_paths: dict[str, Path],
+    lat: float,
+    lon: float,
+) -> None:
+    write_text(scenery_path / "scene.json", stage_paths["scene"].read_text(encoding="utf-8"))
+    dsf_tile = tile_for_location(lat, lon)
+    dsf_path = dsf_tile.file_path(scenery_path)
+    write_text(dsf_path, stage_paths["dsf"].read_text(encoding="utf-8"))
+
+
+def _write_helipad_polygon(scenery_path: Path) -> None:
+    content = "\n".join(
+        [
+            "A",
+            "850",
+            "DRAPED_POLYGON",
+            "",
+            "TEXTURE helipad_markings.png",
+            "SCALE 1.0 1.0",
+            "",
+        ]
+    )
+    write_text(scenery_path / "polygons" / "helipad_markings.pol", content)
+
+
+def _write_objects(scenery_path: Path) -> None:
+    write_simple_hospital_obj(scenery_path / "objects" / "hospital_0.obj")
+    write_simple_marker_obj(scenery_path / "objects" / "helipad_marker.obj")
