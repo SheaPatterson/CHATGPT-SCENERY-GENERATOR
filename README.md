@@ -65,3 +65,8 @@ Each step is currently a placeholder in the export output so the pipeline can be
 See [docs/web-platform-plan.md](docs/web-platform-plan.md) for a proposed web-based architecture
 that layers OSM/Overpass data collection, a backend generation service, and a 3D preview UI on top
 of the existing pipeline.
+
+## Desktop platform plan
+
+See [docs/desktop-platform-plan.md](docs/desktop-platform-plan.md) for a proposed Electron-based
+architecture with a headless TypeScript engine and shared job types.
