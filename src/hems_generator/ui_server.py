@@ -70,13 +70,17 @@ class SceneryUIHandler(BaseHTTPRequestHandler):
             self._serve_file(UI_DIR / "index.html", "text/html; charset=utf-8")
             return
         if parsed.path.startswith("/static/"):
-            path = UI_DIR / parsed.path.removeprefix("/static/")
-            if path.suffix == ".css":
-                self._serve_file(path, "text/css; charset=utf-8")
-            elif path.suffix == ".js":
-                self._serve_file(path, "application/javascript; charset=utf-8")
+            raw_path = parsed.path.removeprefix("/static/")
+            resolved = _safe_resolve(UI_DIR, raw_path)
+            if resolved is None or resolved.is_dir():
+                self._send_json({"error": "Not found"}, status=HTTPStatus.NOT_FOUND)
+                return
+            if resolved.suffix == ".css":
+                self._serve_file(resolved, "text/css; charset=utf-8")
+            elif resolved.suffix == ".js":
+                self._serve_file(resolved, "application/javascript; charset=utf-8")
             else:
-                self._serve_file(path, "application/octet-stream")
+                self._serve_file(resolved, "application/octet-stream")
             return
         if parsed.path.startswith("/api/download/"):
             query = parse_qs(parsed.query)
