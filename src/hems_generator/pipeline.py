@@ -47,8 +47,8 @@ def build_scenery_batch(
     for site in sites:
         package = SceneryPackage(site.faa_id, site.name, config.output_dir)
         package.build_skeleton()
-        zip_name = f"HOSP_{site.faa_id}_{site.name}.zip"
-        zip_path = config.output_dir / zip_name
+        package_name = f"HOSP_{site.faa_id}_{site.name}"
+        zip_path = config.output_dir / f"{package_name}.zip"
         output_paths.append(zip_path)
         package.zip_to(zip_path)
         results.append(PipelineResult(package=package, zip_path=zip_path))
