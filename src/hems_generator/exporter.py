@@ -27,8 +27,6 @@ class SceneryPackage:
     @property
     def scenery_path(self) -> Path:
         return self.package_dir / "Custom Scenery" / self.package_name
-    def scenery_path(self) -> Path:
-        return self.root_dir / self.package_name / "Custom Scenery" / self.package_name
 
     def build_skeleton(self) -> None:
         scenery_root = self.scenery_path
@@ -70,10 +68,6 @@ class SceneryPackage:
     def zip_to(self, target_zip: Path) -> None:
         target_zip.parent.mkdir(parents=True, exist_ok=True)
         base_dir = self.package_dir
-
-    def zip_to(self, target_zip: Path) -> None:
-        target_zip.parent.mkdir(parents=True, exist_ok=True)
-        base_dir = self.root_dir / self.package_name
         with ZipFile(target_zip, "w") as archive:
             for path in base_dir.rglob("*"):
                 archive.write(path, path.relative_to(self.root_dir))
