@@ -15,6 +15,8 @@ from hems_generator.job import HospitalJob, create_default_job
 from hems_generator.obj_writer import write_simple_hospital_obj, write_simple_marker_obj
 from hems_generator.scene import DrapedPolygon, Scene, SceneLight, SceneObject
 from hems_generator.utils import ensure_unique_paths, slugify, write_text
+from hems_generator.exporter import SceneryPackage
+from hems_generator.utils import ensure_unique_paths, slugify
 
 
 @dataclass(frozen=True)
@@ -91,6 +93,10 @@ def build_scenery_batch(
     coord_map: dict[str, tuple[float, float]],
     config: GeneratorConfig,
     jobs_dir: Path,
+def build_scenery_batch(
+    faa_ids: Iterable[str],
+    name_map: dict[str, str],
+    config: GeneratorConfig,
 ) -> List[PipelineResult]:
     config.ensure_output_dir()
     sites = resolve_sites(faa_ids, name_map)
@@ -131,6 +137,12 @@ def build_scenery_batch(
                 scene_path=package.scenery_path / "scene.json",
             )
         )
+        package = SceneryPackage(site.faa_id, site.name, config.output_dir)
+        package.build_skeleton()
+        zip_path = config.output_dir / f"HOSP_{site.faa_id}_{site.name}.zip"
+        output_paths.append(zip_path)
+        package.zip_to(zip_path)
+        results.append(PipelineResult(package=package, zip_path=zip_path))
 
     ensure_unique_paths(output_paths)
     return results

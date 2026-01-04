@@ -22,6 +22,9 @@ python -m hems_generator.cli --ids 1TN4,7NC1 --output output
 faa_id,name,lat,lon
 1TN4,Regional Medical Center,36.1234,-86.6789
 7NC1,Heliport Hospital,35.9876,-80.1234
+faa_id,name
+1TN4,Regional Medical Center
+7NC1,Heliport Hospital
 ```
 
 ```bash
